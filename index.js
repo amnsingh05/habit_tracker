@@ -1,23 +1,16 @@
-auth.signOut().catch(() => {});
-
 /* =========================
-   FIREBASE CONFIG
-   (YOUR REAL CONFIG)
+   FIREBASE AUTH
 ========================= */
-const firebaseConfig = {
-  apiKey: "AIzaSyDxya7NM51dF2usm5nSrTUPYNsH1DHXCDA",
-  authDomain: "habit-tracker-bbd32.firebaseapp.com",
-  projectId: "habit-tracker-bbd32",
-  storageBucket: "habit-tracker-bbd32.appspot.com",
-  messagingSenderId: "803465972106",
-  appId: "1:803465972106:web:17cf58a1bf65de73e8a073"
-};
-
-/* =========================
-   INITIALIZE FIREBASE
-========================= */
-firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
+
+/* =========================
+   MESSAGE HELPER
+========================= */
+function showMessage(text, isError = true) {
+  const msg = document.getElementById("message");
+  msg.style.color = isError ? "red" : "green";
+  msg.textContent = text;
+}
 
 /* =========================
    LOGIN
@@ -25,21 +18,17 @@ const auth = firebase.auth();
 async function login() {
   const email = document.getElementById("email").value.trim();
   const password = document.getElementById("password").value.trim();
-  const msg = document.getElementById("message");
-
-  msg.style.color = "red";
-  msg.innerText = "";
 
   if (!email || !password) {
-    msg.innerText = "Email and password are required";
+    showMessage("Email and password are required");
     return;
   }
 
   try {
     await auth.signInWithEmailAndPassword(email, password);
-    window.location.href = "app.html";
+    window.location.href = "app.html"; // ✅ habit page
   } catch (error) {
-    msg.innerText = error.message;
+    showMessage(error.message);
   }
 }
 
@@ -49,26 +38,21 @@ async function login() {
 async function signup() {
   const email = document.getElementById("email").value.trim();
   const password = document.getElementById("password").value.trim();
-  const msg = document.getElementById("message");
-
-  msg.style.color = "red";
-  msg.innerText = "";
 
   if (!email || !password) {
-    msg.innerText = "Email and password are required";
+    showMessage("Email and password are required");
     return;
   }
 
   if (password.length < 6) {
-    msg.innerText = "Password must be at least 6 characters";
+    showMessage("Password must be at least 6 characters");
     return;
   }
 
   try {
     await auth.createUserWithEmailAndPassword(email, password);
-    msg.style.color = "green";
-    msg.innerText = "Account created successfully! You can login now.";
+    showMessage("Account created successfully. You can login now.", false);
   } catch (error) {
-    msg.innerText = error.message;
+    showMessage(error.message);
   }
 }

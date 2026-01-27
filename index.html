@@ -4,15 +4,28 @@
   <meta charset="UTF-8" />
   <title>Login • Habit Tracker</title>
 
-  <!-- Mobile friendly -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <!-- Styles -->
   <link rel="stylesheet" href="index.css" />
 
-  <!-- Firebase (COMPAT – REQUIRED) -->
+  <!-- Firebase SDKs (COMPAT) -->
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+
+  <!-- Firebase Init -->
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDxya7NM51dF2usm5nSrTUPYNsH1DHXCDA",
+      authDomain: "habit-tracker-bbd32.firebaseapp.com",
+      projectId: "habit-tracker-bbd32",
+      storageBucket: "habit-tracker-bbd32.firebasestorage.app",
+      messagingSenderId: "803465972106",
+      appId: "1:803465972106:web:17cf58a1bf65de73e8a073"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+  </script>
 </head>
 <body>
 
@@ -20,37 +33,17 @@
     <h1>🔐 Habit Tracker</h1>
     <p class="subtitle">Login or create an account to continue</p>
 
-    <!-- Email -->
-    <input
-      id="email"
-      type="email"
-      placeholder="Email address"
-      autocomplete="email"
-      required
-    />
+    <input id="email" type="email" placeholder="Email address" required />
+    <input id="password" type="password" placeholder="Password (min 6 characters)" required />
 
-    <!-- Password -->
-    <input
-      id="password"
-      type="password"
-      placeholder="Password (min 6 characters)"
-      autocomplete="current-password"
-      required
-    />
-
-    <!-- Actions -->
     <button onclick="login()">Login</button>
+    <button class="secondary" onclick="signup()">Create Account</button>
 
-    <button class="secondary" onclick="signup()">
-      Create Account
-    </button>
-
-    <!-- Message -->
     <p id="message"></p>
   </div>
 
-  <!-- Login Logic -->
-  <script src="index.js"></script>
+  <!-- Login Script -->
+  <script src="index.js" defer></script>
 
 </body>
 </html>
