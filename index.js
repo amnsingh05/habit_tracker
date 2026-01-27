@@ -1,77 +1,64 @@
 /* =========================
-   AUTH + AUTO LOGIN
-   Firebase remembers user automatically
+   FIREBASE
 ========================= */
-let CURRENT_USER = null;
+const auth = firebase.auth();
 
-auth.onAuthStateChanged(user => {
-  if (!user) {
-    // Not logged in → go to login
-    window.location.replace("login.html");
-    return;
-  }
+/* =========================
+   GLOBAL STATE
+========================= */
+const DAYS = 30;
+let habits = [];
+let table, habitInput, modalOverlay;
 
-  // Logged in → allow app
-  CURRENT_USER = user;
-  initApp();
+/* =========================
+   DOM READY
+========================= */
+document.addEventListener("DOMContentLoaded", () => {
+  table = document.getElementById("habitTable");
+  habitInput = document.getElementById("habitInput");
+  modalOverlay = document.getElementById("modalOverlay");
+
+  auth.onAuthStateChanged(user => {
+    if (!user) {
+      window.location.href = "login.html";
+      return;
+    }
+
+    loadHabits();
+    render();
+  });
 });
 
 /* =========================
-   CONSTANTS
+   LOAD DATA
 ========================= */
-const DAYS = 30;
+function loadHabits() {
+  habits =
+    JSON.parse(localStorage.getItem("monthlyHabits")) || [
+      { name: "Wake up at 06:00", days: Array(DAYS).fill(0) },
+      { name: "Gym", days: Array(DAYS).fill(0) }
+    ];
+}
 
 /* =========================
    HELPERS
 ========================= */
-function getMonthKey(date = new Date()) {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-}
-
-/* =========================
-   STAR SYSTEM ⭐
-========================= */
-function percentToStars(percent) {
-  if (percent === 100) return "⭐⭐⭐⭐⭐";
-  if (percent >= 80) return "⭐⭐⭐⭐☆";
-  if (percent >= 60) return "⭐⭐⭐☆☆";
-  if (percent >= 40) return "⭐⭐☆☆☆";
-  if (percent >= 20) return "⭐☆☆☆☆";
+function percentToStars(p) {
+  if (p === 100) return "⭐⭐⭐⭐⭐";
+  if (p >= 80) return "⭐⭐⭐⭐☆";
+  if (p >= 60) return "⭐⭐⭐☆☆";
+  if (p >= 40) return "⭐⭐☆☆☆";
+  if (p >= 20) return "⭐☆☆☆☆";
   return "☆☆☆☆☆";
 }
 
-function getMonthlySuccess(days) {
-  const completed = days.reduce((sum, d) => sum + d, 0);
-  return Math.round((completed / DAYS) * 100);
-}
-
-function getDailySuccess(days) {
-  const today = new Date().getDate() - 1;
-  return days[today] === 1 ? 100 : 0;
-}
-
-/* =========================
-   DATA (LOCAL FOR NOW)
-========================= */
-let habits =
-  JSON.parse(localStorage.getItem("monthlyHabits")) || [
-    { name: "Wake up at 06:00", days: Array(DAYS).fill(0) },
-    { name: "Gym", days: Array(DAYS).fill(0) }
-  ];
-
-const table = document.getElementById("habitTable");
-const habitInput = document.getElementById("habitInput");
-
-/* =========================
-   STREAK
-========================= */
 function calculateStreak(days) {
-  let streak = 0;
+  let s = 0;
   for (let i = days.length - 1; i >= 0; i--) {
-    if (days[i]) streak++;
+    if (days[i]) s++;
     else break;
   }
-  return streak;
+  return s;
 }
 
 /* =========================
@@ -81,8 +68,8 @@ function render() {
   table.innerHTML = "";
 
   habits.forEach((habit, index) => {
-    const monthlyPercent = getMonthlySuccess(habit.days);
-    const dailyPercent = getDailySuccess(habit.days);
+    const completed = habit.days.reduce((a, b) => a + b, 0);
+    const percent = Math.round((completed / DAYS) * 100);
     const streak = calculateStreak(habit.days);
 
     const row = document.createElement("tr");
@@ -90,15 +77,10 @@ function render() {
     row.innerHTML = `
       <td>
         <strong>${habit.name}</strong><br>
-        <span onclick="renameHabit(${index})" style="cursor:pointer;">✏️</span>
-        <span onclick="deleteHabit(${index})" style="cursor:pointer;color:red;margin-left:6px;">🗑️</span>
+        <span style="cursor:pointer" onclick="renameHabit(${index})">✏️</span>
+        <span style="cursor:pointer;color:red;margin-left:6px" onclick="deleteHabit(${index})">🗑️</span>
       </td>
-
-      <td style="font-size:12px;line-height:1.5;">
-        <div>📅 ${percentToStars(monthlyPercent)}</div>
-        <div style="color:#64748b;">☀️ ${percentToStars(dailyPercent)}</div>
-      </td>
-
+      <td>${percentToStars(percent)}</td>
       <td>
         <span class="${streak >= 7 ? "streak-gold" : "streak"}">
           🔥 ${streak}
@@ -119,38 +101,7 @@ function render() {
     table.appendChild(row);
   });
 
-  renderDailyProgress();
   localStorage.setItem("monthlyHabits", JSON.stringify(habits));
-}
-
-/* =========================
-   DAILY PROGRESS
-========================= */
-function renderDailyProgress() {
-  const today = new Date().getDate() - 1;
-  const row = document.createElement("tr");
-  row.style.fontWeight = "bold";
-  row.innerHTML = `<td colspan="3">Daily Progress</td>`;
-
-  for (let d = 0; d < DAYS; d++) {
-    const completed = habits.filter(h => h.days[d]).length;
-    const percent = habits.length
-      ? Math.round((completed / habits.length) * 100)
-      : 0;
-
-    const cell = document.createElement("td");
-    cell.className =
-      percent === 100 ? "progress-full" :
-      percent >= 50 ? "progress-mid" :
-      "progress-0";
-
-    if (d === today) cell.classList.add("today");
-    cell.textContent = `${percent}%`;
-
-    row.appendChild(cell);
-  }
-
-  table.appendChild(row);
 }
 
 /* =========================
@@ -163,7 +114,10 @@ function toggleHabit(h, d) {
 
 function confirmAddHabit() {
   const name = habitInput.value.trim();
-  if (!name) return;
+  if (!name) {
+    alert("Please enter a habit name");
+    return;
+  }
 
   habits.push({ name, days: Array(DAYS).fill(0) });
   closeModal();
@@ -188,30 +142,20 @@ function renameHabit(i) {
    MODAL
 ========================= */
 function openModal() {
-  document.getElementById("modalOverlay").classList.remove("hidden");
+  modalOverlay.classList.remove("hidden");
   habitInput.focus();
 }
 
 function closeModal() {
-  document.getElementById("modalOverlay").classList.add("hidden");
+  modalOverlay.classList.add("hidden");
   habitInput.value = "";
 }
 
 /* =========================
-   MONTH ARCHIVE
+   MONTH RESET (FIXED)
 ========================= */
 function startNewMonth() {
   if (!confirm("Start a new month?")) return;
-
-  const key = getMonthKey();
-  const store = JSON.parse(localStorage.getItem("habitData")) || {};
-
-  store[key] = {
-    date: new Date().toLocaleDateString(),
-    habits: JSON.parse(JSON.stringify(habits))
-  };
-
-  localStorage.setItem("habitData", JSON.stringify(store));
 
   habits = habits.map(h => ({
     name: h.name,
@@ -223,11 +167,11 @@ function startNewMonth() {
 }
 
 /* =========================
-   LOGOUT
+   LOGOUT (FIXED)
 ========================= */
 function logout() {
   auth.signOut().then(() => {
-    window.location.replace("login.html");
+    window.location.href = "login.html";
   });
 }
 
@@ -239,8 +183,14 @@ function openHistory() {
 }
 
 /* =========================
-   INIT (after auth)
+   EXPOSE FOR HTML onclick
 ========================= */
-function initApp() {
-  render();
-}
+window.openModal = openModal;
+window.closeModal = closeModal;
+window.confirmAddHabit = confirmAddHabit;
+window.startNewMonth = startNewMonth;
+window.logout = logout;
+window.openHistory = openHistory;
+window.toggleHabit = toggleHabit;
+window.renameHabit = renameHabit;
+window.deleteHabit = deleteHabit;
