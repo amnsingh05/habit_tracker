@@ -3,27 +3,26 @@
 <head>
   <meta charset="UTF-8" />
   <title>Habit Tracker (30 Days)</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="index.css" />
 </head>
 <body>
 
-  <!-- Title -->
-  <h1><span>Habit</span> Tracker</h1>
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <h1><span>Habit</span> Tracker</h1>
 
-  <!-- Optional: Dashboard summary (future-ready) -->
-  <!--
-  <div class="dashboard">
-    <p>📅 January 2026</p>
-    <p>🔥 Best Streak: 12</p>
-    <p>📈 Today: 3 / 5 habits</p>
+    <!-- 🔓 Logout Button -->
+    <button onclick="logout()" class="logout-btn">Logout</button>
   </div>
-  -->
 
-  <!-- Habit Table -->
+  <!-- Habit Tracker Table -->
   <table>
     <thead>
       <tr>
         <th>Habit</th>
+        <th>Success ⭐</th>
+        <th>Streak</th>
+
         <!-- Day headers -->
         <th>D1</th><th>D2</th><th>D3</th><th>D4</th><th>D5</th>
         <th>D6</th><th>D7</th><th>D8</th><th>D9</th><th>D10</th>
@@ -54,12 +53,14 @@
   <div id="modalOverlay" class="modal-overlay hidden">
     <div class="modal">
       <h2>Add New Habit</h2>
+
       <input
         id="habitInput"
         type="text"
         placeholder="Enter habit name"
         autocomplete="off"
       />
+
       <div class="modal-actions">
         <button onclick="closeModal()">Cancel</button>
         <button class="primary" onclick="confirmAddHabit()">Add</button>
@@ -68,6 +69,6 @@
   </div>
 
   <!-- Scripts -->
-  <script src="script.js"></script>
+  <script src="index.js"></script>
 </body>
 </html>
