@@ -1,3 +1,5 @@
+auth.signOut().catch(() => {});
+
 /* =========================
    FIREBASE CONFIG
    (YOUR REAL CONFIG)
@@ -35,7 +37,7 @@ async function login() {
 
   try {
     await auth.signInWithEmailAndPassword(email, password);
-    window.location.href = "index.html";
+    window.location.href = "app.html";
   } catch (error) {
     msg.innerText = error.message;
   }

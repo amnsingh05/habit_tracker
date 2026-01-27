@@ -171,7 +171,7 @@ function startNewMonth() {
 ========================= */
 function logout() {
   auth.signOut().then(() => {
-    window.location.href = "login.html";
+    window.location.href = "index.html";
   });
 }
 
