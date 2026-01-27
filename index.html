@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Habit Tracker (30 Days)</title>
+  <title>Login • Habit Tracker</title>
 
   <!-- Mobile friendly -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,90 +10,46 @@
   <!-- Styles -->
   <link rel="stylesheet" href="index.css" />
 
-  <!-- 🔥 Firebase SDKs (COMPAT) -->
+  <!-- Firebase (COMPAT – REQUIRED) -->
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-
-  <!-- 🔥 Firebase INIT (REQUIRED) -->
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyDxya7NM51dF2usm5nSrTUPYNsH1DHXCDA",
-      authDomain: "habit-tracker-bbd32.firebaseapp.com",
-      projectId: "habit-tracker-bbd32",
-      storageBucket: "habit-tracker-bbd32.firebasestorage.app",
-      messagingSenderId: "803465972106",
-      appId: "1:803465972106:web:17cf58a1bf65de73e8a073",
-      measurementId: "G-7X34DVWXMK"
-    };
-
-    // ✅ THIS WAS MISSING
-    firebase.initializeApp(firebaseConfig);
-  </script>
 </head>
 <body>
 
-  <!-- =========================
-       TOP BAR
-  ========================== -->
-  <div class="top-bar">
-    <h1><span>Habit</span> Tracker</h1>
-    <button class="logout-btn" onclick="logout()">Logout</button>
+  <div class="login-card">
+    <h1>🔐 Habit Tracker</h1>
+    <p class="subtitle">Login or create an account to continue</p>
+
+    <!-- Email -->
+    <input
+      id="email"
+      type="email"
+      placeholder="Email address"
+      autocomplete="email"
+      required
+    />
+
+    <!-- Password -->
+    <input
+      id="password"
+      type="password"
+      placeholder="Password (min 6 characters)"
+      autocomplete="current-password"
+      required
+    />
+
+    <!-- Actions -->
+    <button onclick="login()">Login</button>
+
+    <button class="secondary" onclick="signup()">
+      Create Account
+    </button>
+
+    <!-- Message -->
+    <p id="message"></p>
   </div>
 
-  <!-- =========================
-       HABIT TABLE
-  ========================== -->
-  <table>
-    <thead>
-      <tr>
-        <th>Habit</th>
-        <th>Success ⭐</th>
-        <th>Streak</th>
-
-        <th>D1</th><th>D2</th><th>D3</th><th>D4</th><th>D5</th>
-        <th>D6</th><th>D7</th><th>D8</th><th>D9</th><th>D10</th>
-        <th>D11</th><th>D12</th><th>D13</th><th>D14</th><th>D15</th>
-        <th>D16</th><th>D17</th><th>D18</th><th>D19</th><th>D20</th>
-        <th>D21</th><th>D22</th><th>D23</th><th>D24</th><th>D25</th>
-        <th>D26</th><th>D27</th><th>D28</th><th>D29</th><th>D30</th>
-      </tr>
-    </thead>
-    <tbody id="habitTable"></tbody>
-  </table>
-
-  <!-- =========================
-       ACTION BUTTONS
-  ========================== -->
-  <div class="actions">
-    <button onclick="openModal()">➕ Add Habit</button>
-    <button onclick="startNewMonth()" style="background:#f97316;">🔁 Start New Month</button>
-    <button onclick="openHistory()" style="background:#0ea5e9;">📊 View Previous Months</button>
-  </div>
-
-  <!-- =========================
-       ADD HABIT MODAL
-  ========================== -->
-  <div id="modalOverlay" class="modal-overlay hidden">
-    <div class="modal">
-      <h2>Add New Habit</h2>
-
-      <input
-        id="habitInput"
-        type="text"
-        placeholder="Enter habit name"
-        autocomplete="off"
-      />
-
-      <div class="modal-actions">
-        <button onclick="closeModal()">Cancel</button>
-        <button class="primary" onclick="confirmAddHabit()">Add</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- =========================
-       APP SCRIPT (LAST)
-  ========================== -->
+  <!-- Login Logic -->
   <script src="index.js"></script>
 
 </body>
