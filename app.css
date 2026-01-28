@@ -141,6 +141,31 @@ input[type="checkbox"] {
 }
 
 /* =========================
+   DAILY PROGRESS (INSIDE TABLE)
+========================= */
+.day-progress {
+  width: 100%;
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.day-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #22c55e, #16a34a);
+  transition: width 0.3s ease;
+}
+
+.day-progress-text {
+  font-size: 11px;
+  margin-top: 4px;
+  color: #065f46;
+  font-weight: 600;
+}
+
+/* =========================
    ACTION BUTTONS
 ========================= */
 .actions {
@@ -167,6 +192,14 @@ button:hover {
 
 button:active {
   transform: scale(0.96);
+}
+
+button.orange {
+  background: #f97316;
+}
+
+button.blue {
+  background: #0ea5e9;
 }
 
 /* =========================

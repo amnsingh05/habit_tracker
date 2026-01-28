@@ -9,6 +9,7 @@ const auth = firebase.auth();
 const DAYS = 30;
 let habits = [];
 let table, habitInput, modalOverlay;
+let viewingHistory = false;
 
 /* =========================
    DOM READY
@@ -20,24 +21,48 @@ document.addEventListener("DOMContentLoaded", () => {
 
   auth.onAuthStateChanged(user => {
     if (!user) {
-      window.location.href = "app.html";
+      window.location.href = "index.html";
       return;
     }
-
-    loadHabits();
+    loadCurrentMonth();
     render();
   });
 });
 
 /* =========================
-   LOAD DATA
+   LOAD / SAVE CURRENT MONTH
 ========================= */
-function loadHabits() {
-  habits =
-    JSON.parse(localStorage.getItem("monthlyHabits")) || [
-      { name: "Wake up at 06:00", days: Array(DAYS).fill(0) },
-      { name: "Gym", days: Array(DAYS).fill(0) }
-    ];
+function loadCurrentMonth() {
+  const data = localStorage.getItem("habits-current");
+  habits = data
+    ? JSON.parse(data)
+    : [
+        { name: "Wake up at 06:00", days: Array(DAYS).fill(0) },
+        { name: "Gym", days: Array(DAYS).fill(0) }
+      ];
+}
+
+function saveCurrentMonth() {
+  if (!viewingHistory) {
+    localStorage.setItem("habits-current", JSON.stringify(habits));
+  }
+}
+
+/* =========================
+   STREAK (FIXED PROPERLY)
+========================= */
+function calculateStreak(days) {
+  let streak = 0;
+
+  // find last completed day
+  let i = days.length - 1;
+  while (i >= 0 && days[i] === 0) i--;
+
+  for (; i >= 0; i--) {
+    if (days[i] === 1) streak++;
+    else break;
+  }
+  return streak;
 }
 
 /* =========================
@@ -52,13 +77,31 @@ function percentToStars(p) {
   return "☆☆☆☆☆";
 }
 
-function calculateStreak(days) {
-  let s = 0;
-  for (let i = days.length - 1; i >= 0; i--) {
-    if (days[i]) s++;
-    else break;
+/* =========================
+   DAILY PROGRESS
+========================= */
+function getDayProgressPercent(d) {
+  if (!habits.length) return 0;
+  const completed = habits.filter(h => h.days[d]).length;
+  return Math.round((completed / habits.length) * 100);
+}
+
+function renderDailyProgressRow() {
+  const row = document.createElement("tr");
+  row.innerHTML = `<td><strong>Daily Progress</strong></td><td></td><td></td>`;
+
+  for (let d = 0; d < DAYS; d++) {
+    const p = getDayProgressPercent(d);
+    const td = document.createElement("td");
+    td.innerHTML = `
+      <div class="day-progress">
+        <div class="day-progress-fill" style="width:${p}%"></div>
+      </div>
+      <div class="day-progress-text">${p}%</div>
+    `;
+    row.appendChild(td);
   }
-  return s;
+  table.appendChild(row);
 }
 
 /* =========================
@@ -67,25 +110,21 @@ function calculateStreak(days) {
 function render() {
   table.innerHTML = "";
 
-  habits.forEach((habit, index) => {
+  habits.forEach((habit, i) => {
     const completed = habit.days.reduce((a, b) => a + b, 0);
     const percent = Math.round((completed / DAYS) * 100);
     const streak = calculateStreak(habit.days);
 
     const row = document.createElement("tr");
-
     row.innerHTML = `
       <td>
         <strong>${habit.name}</strong><br>
-        <span style="cursor:pointer" onclick="renameHabit(${index})">✏️</span>
-        <span style="cursor:pointer;color:red;margin-left:6px" onclick="deleteHabit(${index})">🗑️</span>
+        ${!viewingHistory ? `
+          <span onclick="renameHabit(${i})">✏️</span>
+          <span onclick="deleteHabit(${i})" style="color:red">🗑️</span>` : ""}
       </td>
       <td>${percentToStars(percent)}</td>
-      <td>
-        <span class="${streak >= 7 ? "streak-gold" : "streak"}">
-          🔥 ${streak}
-        </span>
-      </td>
+      <td><span class="${streak >= 7 ? "streak-gold" : "streak"}">🔥 ${streak}</span></td>
     `;
 
     habit.days.forEach((day, d) => {
@@ -93,7 +132,8 @@ function render() {
       td.innerHTML = `
         <input type="checkbox"
           ${day ? "checked" : ""}
-          onchange="toggleHabit(${index}, ${d})">
+          ${viewingHistory ? "disabled" : ""}
+          onchange="toggleHabit(${i}, ${d})">
       `;
       row.appendChild(td);
     });
@@ -101,24 +141,22 @@ function render() {
     table.appendChild(row);
   });
 
-  localStorage.setItem("monthlyHabits", JSON.stringify(habits));
+  renderDailyProgressRow();
+  saveCurrentMonth();
 }
 
 /* =========================
    ACTIONS
 ========================= */
-function toggleHabit(h, d) {
-  habits[h].days[d] ^= 1;
+function toggleHabit(i, d) {
+  if (viewingHistory) return;
+  habits[i].days[d] ^= 1;
   render();
 }
 
 function confirmAddHabit() {
   const name = habitInput.value.trim();
-  if (!name) {
-    alert("Please enter a habit name");
-    return;
-  }
-
+  if (!name) return alert("Enter habit name");
   habits.push({ name, days: Array(DAYS).fill(0) });
   closeModal();
   render();
@@ -139,7 +177,39 @@ function renameHabit(i) {
 }
 
 /* =========================
-   MODAL
+   MONTH CONTROLS (FIXED + HISTORY)
+========================= */
+function startNewMonth() {
+  if (!confirm("Archive current month and start new one?")) return;
+
+  const archive =
+    JSON.parse(localStorage.getItem("habitArchive")) || [];
+
+  archive.push({
+    date: new Date().toLocaleString("default", {
+      month: "long",
+      year: "numeric"
+    }),
+    habits: JSON.parse(JSON.stringify(habits))
+  });
+
+  localStorage.setItem("habitArchive", JSON.stringify(archive));
+
+  habits = habits.map(h => ({
+    name: h.name,
+    days: Array(DAYS).fill(0)
+  }));
+
+  viewingHistory = false;
+  render();
+}
+
+function openHistory() {
+  window.location.href = "history.html";
+}
+
+/* =========================
+   MODAL / LOGOUT
 ========================= */
 function openModal() {
   modalOverlay.classList.remove("hidden");
@@ -151,46 +221,19 @@ function closeModal() {
   habitInput.value = "";
 }
 
-/* =========================
-   MONTH RESET (FIXED)
-========================= */
-function startNewMonth() {
-  if (!confirm("Start a new month?")) return;
-
-  habits = habits.map(h => ({
-    name: h.name,
-    days: Array(DAYS).fill(0)
-  }));
-
-  localStorage.setItem("monthlyHabits", JSON.stringify(habits));
-  render();
-}
-
-/* =========================
-   LOGOUT (FIXED)
-========================= */
 function logout() {
-  auth.signOut().then(() => {
-    window.location.href = "index.html";
-  });
+  auth.signOut().then(() => window.location.href = "index.html");
 }
 
 /* =========================
-   NAVIGATION
-========================= */
-function openHistory() {
-  window.location.href = "history.html";
-}
-
-/* =========================
-   EXPOSE FOR HTML onclick
+   EXPOSE
 ========================= */
 window.openModal = openModal;
 window.closeModal = closeModal;
 window.confirmAddHabit = confirmAddHabit;
-window.startNewMonth = startNewMonth;
 window.logout = logout;
-window.openHistory = openHistory;
 window.toggleHabit = toggleHabit;
 window.renameHabit = renameHabit;
 window.deleteHabit = deleteHabit;
+window.startNewMonth = startNewMonth;
+window.openHistory = openHistory;
