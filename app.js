@@ -24,10 +24,35 @@ document.addEventListener("DOMContentLoaded", () => {
       window.location.href = "index.html";
       return;
     }
+
+    migrateOldDataIfNeeded(); // ✅ IMPORTANT
     loadCurrentMonth();
     render();
   });
 });
+
+/* =========================
+   DATA MIGRATION (CRITICAL)
+========================= */
+function migrateOldDataIfNeeded() {
+  // Old versions
+  const oldMonthly = localStorage.getItem("monthlyHabits");
+  const oldArchive = localStorage.getItem("habitArchive");
+
+  // New keys
+  const current = localStorage.getItem("habits-current");
+
+  // Migrate current month
+  if (!current && oldMonthly) {
+    localStorage.setItem("habits-current", oldMonthly);
+    console.log("✅ Migrated old monthlyHabits → habits-current");
+  }
+
+  // Ensure archive exists
+  if (!localStorage.getItem("habitArchive")) {
+    localStorage.setItem("habitArchive", JSON.stringify([]));
+  }
+}
 
 /* =========================
    LOAD / SAVE CURRENT MONTH
@@ -49,7 +74,7 @@ function saveCurrentMonth() {
 }
 
 /* =========================
-   STREAK (FIXED PROPERLY)
+   STREAK (DATA-BASED)
 ========================= */
 function calculateStreak(days) {
   let streak = 0;
@@ -62,6 +87,7 @@ function calculateStreak(days) {
     if (days[i] === 1) streak++;
     else break;
   }
+
   return streak;
 }
 
@@ -177,7 +203,7 @@ function renameHabit(i) {
 }
 
 /* =========================
-   MONTH CONTROLS (FIXED + HISTORY)
+   MONTH CONTROLS + HISTORY
 ========================= */
 function startNewMonth() {
   if (!confirm("Archive current month and start new one?")) return;
